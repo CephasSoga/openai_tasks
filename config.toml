@@ -1,2 +1,5 @@
 [Realtime]
 url = "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01"
+filePath = "./history.json"
+maxReconnectAttempts = 5
+maxReconnectDelay = 16000

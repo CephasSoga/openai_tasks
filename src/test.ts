@@ -24,13 +24,12 @@ export interface Event {
     item: ConversationItem;
 }
 
-const errorHandler = (error: any, context: string) => { 
-    console.log(`[Error] ${context}`); 
-    console.log('type', error.type); 
-    console.log('code', error.code); 
-    console.log('message', error.message); 
-    console.log('param', error.param); 
-    console.log('event_id', error.event_id); 
+const errorHandler = (error: any) => {
+    console.log('type', error.type);
+    console.log('code', error.code);
+    console.log('message', error.message);
+    console.log('param', error.param);
+    console.log('event_id', error.event_id);
 };
 
 class RealTimeCompletion {
@@ -38,9 +37,6 @@ class RealTimeCompletion {
     private ws: WebSocket | null;
     public fileBasedHistory: FileBasedHistory;
     private isReconnecting: boolean;
-    private reconnectAttempts: number = 0;
-    private maxReconnectAttempts: number = config.realtime.maxReconnectAttempts;
-    private maxReconnectDelay: number = config.realtime.maxReconnectDelay
 
     constructor() {
         this.url = config.realtime.url;
@@ -68,7 +64,6 @@ class RealTimeCompletion {
     // Handle WebSocket open event
     private handleOpen = async () => {
         console.log("Connected to server.");
-        this.reconnectAttempts = 0; //Reset max reconnect attempts 
 
         // Send initial setup message
         const initialMessage = {
@@ -118,20 +113,14 @@ class RealTimeCompletion {
         }
     };
 
-    // Reconnect WebSocket connection 
-    private reconnect() { 
-        if (this.reconnectAttempts >= this.maxReconnectAttempts) { 
-            console.error("Maximum reconnection attempts reached. Giving up."); 
-            return; 
-        } 
+    // Reconnect WebSocket connection
+    private reconnect() {
         this.isReconnecting = true;
-        const delay = Math.min(Math.pow(2, this.reconnectAttempts) * 1000, this.maxReconnectDelay); // Exponential backoff 
-        console.log(`Attempting to reconnect... (Attempt ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})`); 
-        setTimeout(() => { this.setupWebSocket(); 
-            // Set up a new WebSocket connection 
-            this.isReconnecting = false; 
-            this.reconnectAttempts++; 
-        }, delay); // Retry after delay 
+        console.log("Attempting to reconnect...");
+        setTimeout(() => {
+            this.setupWebSocket(); // Set up a new WebSocket connection
+            this.isReconnecting = false;
+        }, 3000); // Retry after 3 seconds (can be adjusted)
     }
 
     // Record event to history
@@ -158,7 +147,7 @@ class RealTimeCompletion {
             // Send the event message
             this.ws.send(JSON.stringify(event), (err) => {
                 if (err) {
-                    errorHandler(err, 'Send event');
+                    errorHandler(err);
                     reject(err); // Reject if sending fails
                 } else {
                     console.log("Event sent successfully.");
@@ -171,7 +160,7 @@ class RealTimeCompletion {
                 JSON.stringify({ type: "response.create" }),
                 (err) => {
                     if (err) {
-                        errorHandler(err, 'Send event');
+                        errorHandler(err);
                         reject(err);
                     } else {
                         console.log("Response.create sent successfully.");
